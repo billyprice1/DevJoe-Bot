@@ -71,6 +71,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AquiredRank.cs" />
+    <Compile Include="CF.cs" />
     <Compile Include="Command.cs" />
     <Compile Include="FileIO.cs" />
     <Compile Include="SaveableSettings.cs" />

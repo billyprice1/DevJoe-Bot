@@ -17,9 +17,12 @@ namespace DevJoeBot
         public static List<Command> user = new List<Command>();
 
         public string name = "";
+        public string description = "";
+        public string syntax = "";
+        public int requiredRank = 0;
         public event CommandRun onCommandRun;
 
-        public Command(bool a, string name)
+        public Command(bool a, string name, int requiredRank)
         {
             if(a)
             {
@@ -29,6 +32,7 @@ namespace DevJoeBot
                 user.Add(this);
             }
             this.name = ";"+name;
+            this.requiredRank = requiredRank;
         }
 
         public static Command getCommand(string r)
