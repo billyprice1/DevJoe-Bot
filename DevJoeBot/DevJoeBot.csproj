@@ -74,8 +74,10 @@
     <Compile Include="AquiredRank.cs" />
     <Compile Include="CF.cs" />
     <Compile Include="Command.cs" />
+    <Compile Include="ConsoleTools.cs" />
     <Compile Include="FileIO.cs" />
     <Compile Include="SaveableSettings.cs" />
+    <Compile Include="ServerObject.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

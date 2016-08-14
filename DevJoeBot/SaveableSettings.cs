@@ -11,6 +11,7 @@ namespace DevJoeBot
     {
 
         public List<Command> usercmds = new List<Command>();
+        public List<ServerObject> servers = new List<ServerObject>();
         public bool autosignin = false;
         public string token = "";
         public string owner = "";

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
+using System.Threading;
 
 namespace DevJoeBot
 {
@@ -12,6 +13,7 @@ namespace DevJoeBot
 
         private static ulong OwnerID = 0;
         private static DiscordClient c = null;
+        private static Thread CT = null;
 
         static void Main(string[] args)
         {
@@ -26,6 +28,13 @@ namespace DevJoeBot
             Console.WriteLine("# Here lies all the logging.");
             Console.WriteLine();
             Console.WriteLine("We're setting up for you..");
+
+            ConsoleTools l = new ConsoleTools();
+            Thread t = new Thread(new ThreadStart(l.commandInput));
+            CT = t;
+            t.Start();
+
+            while (!t.IsAlive) { };
 
             // COMMANDS
             Command ca = new Command(true, "help", AquiredRank.USER);
@@ -43,6 +52,11 @@ namespace DevJoeBot
             cc.syntax = ";shutdown";
             cc.onCommandRun += Cc_onCommandRun;
 
+            Command cd = new Command(true, "modmode", AquiredRank.OWNER);
+            cd.description = "Toggles moderation mode for the current server";
+            cd.syntax = ";modmode";
+            cd.onCommandRun += Cd_onCommandRun;
+
             OwnerID = ulong.Parse(Settings.settings.owner);
 
             c.ExecuteAndWait(async() => {
@@ -50,14 +64,19 @@ namespace DevJoeBot
                 c.MessageReceived += C_MessageReceived;
                 c.JoinedServer += C_JoinedServer;
                 c.LeftServer += C_LeftServer;
-                Console.WriteLine("READY!");
+                ConsoleTools.Log("READY!");
             });
+        }
+
+        private static void Cd_onCommandRun(object sender, string name, string[] args, User user, Channel c)
+        {
+            
         }
 
         private static void Cc_onCommandRun(object sender, string name, string[] args, User user, Channel cc)
         {
             c.Disconnect();
-            Console.WriteLine("Cleaing up...");
+            ConsoleTools.Log("You may exit this window when ready.");
         }
 
         private static void Cb_onCommandRun(object sender, string name, string[] args, User user, Channel c)
@@ -165,7 +184,7 @@ namespace DevJoeBot
 
         private static void C_JoinedServer(object sender, ServerEventArgs e)
         {
-            Console.WriteLine("[ServerJoin] Joined server " + e.Server.Name + " with ID " + e.Server.Id);
+            ConsoleTools.Log("Joined server " + e.Server.Name + " with ID " + e.Server.Id);
         }
 
         private static void C_MessageReceived(object sender, MessageEventArgs e)
@@ -182,17 +201,17 @@ namespace DevJoeBot
                     if (c.requiredRank == 0)
                     {
                         c.execute(args, e.User, e.Channel);
-                        Console.WriteLine("User " + e.User.Name + " (" + e.User.Id + ") executed '" + e.Message + "' on server " + e.Server.Name + " (" + e.User.Id + ")");
+                        ConsoleTools.Log("User " + e.User.Name + " (" + e.User.Id + ") executed '" + e.Message + "' on server " + e.Server.Name + " (" + e.User.Id + ")");
                     } else if(c.requiredRank == 1)
                     {
                         if(false || e.User.Id == OwnerID)
                         {
                             c.execute(args, e.User, e.Channel);
-                            Console.WriteLine("User " + e.User.Name + " (" + e.User.Id + ") executed '" + e.Message + "' on server " + e.Server.Name + " (" + e.User.Id + ")");
+                            ConsoleTools.Log("User " + e.User.Name + " (" + e.User.Id + ") executed '" + e.Message + "' on server " + e.Server.Name + " (" + e.User.Id + ")");
                         } else
                         {
                             e.Channel.SendMessage(CF.f(e.User, "Hey! You don't have permission to run that! (Required Permission Level: MOD)"));
-                            Console.WriteLine("User " + e.User.Name + " (" + e.User.Id + ") attempted to execute '" + e.Message + "' on server " + e.Server.Name + " (" + e.User.Id + ") but didn't have permission level MOD");
+                            ConsoleTools.Log("User " + e.User.Name + " (" + e.User.Id + ") attempted to execute '" + e.Message + "' on server " + e.Server.Name + " (" + e.User.Id + ") but didn't have permission level MOD");
                         }
                     } else
                     {
