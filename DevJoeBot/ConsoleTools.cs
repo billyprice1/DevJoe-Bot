@@ -27,7 +27,10 @@ namespace DevJoeBot
                         currentinput += "" + i.KeyChar;
                     } else if(i.Key == ConsoleKey.Backspace)
                     {
-                        currentinput = currentinput.Substring(0, currentinput.ToCharArray().Length - 1);
+                        if (currentinput.ToCharArray().Length > 0)
+                        {
+                            currentinput = currentinput.Substring(0, currentinput.ToCharArray().Length - 1);
+                        }
                     } else if(i.Key == ConsoleKey.Enter)
                     {
                         break;
