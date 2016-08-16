@@ -11,19 +11,26 @@ namespace DevJoeBot
     class ServerObject
     {
 
-        private Server s;
         public ulong ID;
         private bool moderated = false;
+        public ulong modRole = 0;
 
         public ServerObject(Server s)
         {
-            this.s = s;
             ID = s.Id;
         }
 
         public Server getServer()
         {
-            return s;
+            Server[] servs = Program.c.Servers.ToArray();
+            for(int i=0;i<servs.Length;i++)
+            {
+                if(servs[i].Id == ID)
+                {
+                    return servs[i];
+                }
+            }
+            return null;
         }
 
         public bool isModerated()

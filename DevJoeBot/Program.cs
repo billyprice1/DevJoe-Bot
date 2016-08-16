@@ -5,6 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using System.Threading;
+using System.Windows.Forms;
+using System.IO;
+using DSG;
 
 namespace DevJoeBot
 {
@@ -12,29 +15,36 @@ namespace DevJoeBot
     {
 
         private static ulong OwnerID = 0;
-        private static DiscordClient c = null;
+        public static DiscordClient c = null;
         private static Thread CT = null;
 
         static void Main(string[] args)
         {
+            if(args.Length == 1 && args[0] == "GEN")
+            {
+                Generator.Start();
+                return;
+            }
+            // Console.Title = "DevJoeBot Console";
+            if (File.Exists("latest.log")) File.Delete("latest.log");
             Settings.LoadSettings();
             string token = tokenReq();
             c = new DiscordClient();
             Settings.settings.firstrun = false;
             Settings.SaveSettings();
-            Console.Clear();
+            //Console.Clear();
             Console.WriteLine("###############################");
             Console.WriteLine("# SERVER CONSOLE");
             Console.WriteLine("# Here lies all the logging.");
             Console.WriteLine();
             Console.WriteLine("We're setting up for you..");
 
-            ConsoleTools l = new ConsoleTools();
-            Thread t = new Thread(new ThreadStart(l.commandInput));
-            CT = t;
-            t.Start();
+            //ConsoleTools l = new ConsoleTools();
+            //Thread t = new Thread(new ThreadStart(l.commandInput));
+            //CT = t;
+            //t.Start();
 
-            while (!t.IsAlive) { };
+            //while (!t.IsAlive) { };
 
             // COMMANDS
             Command ca = new Command(true, "help", AquiredRank.USER);
@@ -47,15 +57,29 @@ namespace DevJoeBot
             cb.syntax = ";about [bot|dev]";
             cb.onCommandRun += Cb_onCommandRun;
 
-            Command cc = new Command(true, "shutdown", AquiredRank.OWNER);
-            cc.description = "Shuts the bot down";
-            cc.syntax = ";shutdown";
-            cc.onCommandRun += Cc_onCommandRun;
+            Command cg = new Command(true, "testcomm", AquiredRank.MOD);
+            cg.description = "A dummy command";
+            cg.onCommandRun += Cf_onCommandRun1;
 
             Command cd = new Command(true, "modmode", AquiredRank.OWNER);
             cd.description = "Toggles moderation mode for the current server";
             cd.syntax = ";modmode";
             cd.onCommandRun += Cd_onCommandRun;
+
+            Command ce = new Command(true, "modrole", AquiredRank.OWNER);
+            ce.description = "Gets/sets the mod rank for the current server";
+            ce.syntax = ";modrole [role_name]";
+            ce.onCommandRun += Ce_onCommandRun;
+
+            Command cc = new Command(true, "shutdown", AquiredRank.SUPERUSER);
+            cc.description = "Shuts the bot down";
+            cc.syntax = ";shutdown";
+            cc.onCommandRun += Cc_onCommandRun;
+
+            Command cf = new DevJoeBot.Command(true, "status", AquiredRank.SUPERUSER);
+            cf.description = "Changes the bot's status";
+            cf.syntax = ";status [Status message]";
+            cf.onCommandRun += Cf_onCommandRun;
 
             OwnerID = ulong.Parse(Settings.settings.owner);
 
@@ -64,8 +88,98 @@ namespace DevJoeBot
                 c.MessageReceived += C_MessageReceived;
                 c.JoinedServer += C_JoinedServer;
                 c.LeftServer += C_LeftServer;
+                c.ServerAvailable += C_ServerAvailable;
                 ConsoleTools.Log("READY!");
             });
+        }
+
+        private static void Cf_onCommandRun1(object sender, string name, string[] args, User user, Channel c)
+        {
+            c.SendMessage(CF.f(user, "Test success"));
+        }
+
+        private static void C_ServerAvailable(object sender, ServerEventArgs e)
+        {
+            ConsoleTools.Log("Server " + e.Server.Id + " has declared it's ready state.");
+            if (getServerObject(e.Server.Id) == null)
+            {
+                Settings.settings.servers.Add(new ServerObject(e.Server));
+            }
+        }
+
+        private static void Cf_onCommandRun(object sender, string name, string[] args, User user, Channel cc)
+        {
+            if (args.Length >= 1)
+            {
+                string construct = "";
+                for(int i=0;i<args.Length;i++)
+                {
+                    construct += args[i] + " ";
+                }
+                c.SetGame(construct);
+                cc.SendMessage(CF.f(user, "Status updated!"));
+            } else
+            {
+                cc.SendMessage(CF.f(user, "This command requires 1 argument."));
+            }
+        }
+
+        private static void Ce_onCommandRun(object sender, string name, string[] args, User user, Channel c)
+        {
+            // ;modrole
+            if(args.Length == 0)
+            {
+                if (getServerObject(c.Server.Id).modRole != 0)
+                {
+                    ulong modid = getServerObject(c.Server.Id).modRole;
+                    Role modrole = c.Server.GetRole(modid);
+                    if (modrole != null)
+                    {
+                        c.SendMessage(CF.f(user, "The moderator role for this server is " + modrole.Name + " (" + modrole.Id + ")"));
+                    }
+                }
+                else
+                {
+                    c.SendMessage(CF.f(user, "No moderator role for this server is specified"));
+                }
+            } else if(args.Length == 1)
+            {
+                Role[] r = c.Server.Roles.ToArray();
+                Role role = null;
+                for(int i=0;i<r.Length;i++)
+                {
+                    if (r[i].Name.ToLower() == args[0].ToLower())
+                    {
+                        role = r[i];
+                    }
+                }
+                if(role == null)
+                {
+                    c.SendMessage(CF.f(user, "The role you specified does not exist."));
+                } else
+                {
+                    getServerObject(c.Server.Id).modRole = role.Id;
+                    c.SendMessage(CF.f(user, "Moderator role changed to " + role.Name + " (" + role.Id + ")"));
+                    Settings.SaveSettings();
+                }
+            } else
+            {
+                c.SendMessage(CF.f(user, "This command requires 1 argument."));
+            }
+        }
+
+        private static ServerObject getServerObject(ulong ID)
+        {
+            List<ServerObject> b = Settings.settings.servers;
+            ServerObject[] objects = b.ToArray();
+            for(int i=0;i<objects.Length;i++)
+            {
+                if(objects[i].ID == ID)
+                {
+                    return objects[i];
+                 }
+            }
+            return null;
         }
 
         private static void Cd_onCommandRun(object sender, string name, string[] args, User user, Channel c)
@@ -77,6 +191,7 @@ namespace DevJoeBot
         {
             c.Disconnect();
             ConsoleTools.Log("You may exit this window when ready.");
+            Application.Exit();
         }
 
         private static void Cb_onCommandRun(object sender, string name, string[] args, User user, Channel c)
@@ -125,8 +240,11 @@ namespace DevJoeBot
                         else if (e[i].requiredRank == 2)
                         {
                             plevel = "(Required Permission Level: OWNER)";
+                        } else if (e[i].requiredRank == 3)
+                        {
+                            plevel = "(Required Permission Level: SUPERUSER)";
                         }
-                        if(e[i].syntax != "")
+                    if (e[i].syntax != "")
                         {
                             s += "\n" + e[i].syntax + " - " + desc + " " + plevel;
                         } else
@@ -154,6 +272,9 @@ namespace DevJoeBot
                         else if(e[i].requiredRank == 2)
                         {
                             plevel = "(Required Permission Level: OWNER)";
+                        } else if(e[i].requiredRank == 3)
+                        {
+                            plevel = "(Required Permission Level: SUPERUSER)";
                         }
                         if (e[i].syntax != "")
                         {
@@ -179,12 +300,19 @@ namespace DevJoeBot
 
         private static void C_LeftServer(object sender, ServerEventArgs e)
         {
-            
+            if (getServerObject(e.Server.Id) != null)
+            {
+                Settings.settings.servers.Remove(getServerObject(e.Server.Id));
+            }
         }
 
         private static void C_JoinedServer(object sender, ServerEventArgs e)
         {
             ConsoleTools.Log("Joined server " + e.Server.Name + " with ID " + e.Server.Id);
+            if(getServerObject(e.Server.Id) == null)
+            {
+                Settings.settings.servers.Add(new ServerObject(e.Server));
+            }
         }
 
         private static void C_MessageReceived(object sender, MessageEventArgs e)
@@ -204,7 +332,7 @@ namespace DevJoeBot
                         ConsoleTools.Log("User " + e.User.Name + " (" + e.User.Id + ") executed '" + e.Message + "' on server " + e.Server.Name + " (" + e.User.Id + ")");
                     } else if(c.requiredRank == 1)
                     {
-                        if(false || e.User.Id == OwnerID)
+                        if(e.User.HasRole(e.Server.GetRole(getServerObject(e.Server.Id).modRole)) || e.User.Id == OwnerID || e.User.Id == e.Server.Owner.Id)
                         {
                             c.execute(args, e.User, e.Channel);
                             ConsoleTools.Log("User " + e.User.Name + " (" + e.User.Id + ") executed '" + e.Message + "' on server " + e.Server.Name + " (" + e.User.Id + ")");
@@ -213,9 +341,9 @@ namespace DevJoeBot
                             e.Channel.SendMessage(CF.f(e.User, "Hey! You don't have permission to run that! (Required Permission Level: MOD)"));
                             ConsoleTools.Log("User " + e.User.Name + " (" + e.User.Id + ") attempted to execute '" + e.Message + "' on server " + e.Server.Name + " (" + e.User.Id + ") but didn't have permission level MOD");
                         }
-                    } else
+                    } else if(c.requiredRank == 2)
                     {
-                        if (e.User.Id == OwnerID)
+                        if (e.User.Id == OwnerID || e.User.Id == e.Server.Owner.Id)
                         {
                             c.execute(args, e.User, e.Channel);
                             Console.WriteLine("User " + e.User.Name + " (" + e.User.Id + ") executed '" + e.Message + "' on server " + e.Server.Name + " (" + e.User.Id + ")");
@@ -225,12 +353,24 @@ namespace DevJoeBot
                             e.Channel.SendMessage(CF.f(e.User, "Hey! You don't have permission to run that! (Required Permission Level: OWNER)"));
                             Console.WriteLine("User " + e.User.Name + " (" + e.User.Id + ") attempted to execute '" + e.Message + "' on server " + e.Server.Name + " (" + e.User.Id + ") but didn't have permission level OWNER");
                         }
+                    } else if(c.requiredRank == 3)
+                    {
+                        if (e.User.Id == OwnerID)
+                        {
+                            c.execute(args, e.User, e.Channel);
+                            Console.WriteLine("User " + e.User.Name + " (" + e.User.Id + ") executed '" + e.Message + "' on server " + e.Server.Name + " (" + e.User.Id + ")");
+                        }
+                        else
+                        {
+                            e.Channel.SendMessage(CF.f(e.User, "Hey! You don't have permission to run that! (Required Permission Level: SUPERUSER)"));
+                            Console.WriteLine("User " + e.User.Name + " (" + e.User.Id + ") attempted to execute '" + e.Message + "' on server " + e.Server.Name + " (" + e.User.Id + ") but didn't have permission level SUPERUSER");
+                        }
                     }
                 }
             }
         }
 
-        private static object[] genargs(string s)
+        public static object[] genargs(string s)
         {
             string[] a = s.Split(' ');
             List<string> b = new List<string>();
@@ -245,37 +385,13 @@ namespace DevJoeBot
         {
             if (!Settings.settings.autosignin)
             {
-                Console.WriteLine("############SIGN IN##############");
-                Console.WriteLine("# This bot requires a token.");
-                Console.WriteLine("# Please enter your token below.");
-                Console.WriteLine();
-                Console.Write("Bot token: ");
-                string s = Console.ReadLine();
-                Console.Write("\nWould you like to automatically sign in with this token? (y/n): ");
-                ConsoleKeyInfo key = Console.ReadKey();
-                if(key.Key == ConsoleKey.Y)
-                {
-                    Settings.settings.token = s;
-                    Settings.settings.autosignin = true;
-                    Settings.SaveSettings();
-                }
-                if (Settings.settings.owner == "")
-                {
-                    Console.Write("\nOwner user ID: ");
-                    string owner = Console.ReadLine();
-                    Settings.settings.owner = owner;
-                }
-                if(Settings.settings.firstrun)
-                {
-                    Console.WriteLine("Additional setup can be done from your server by using !setup");
-                    Console.Write("Press any key to start the bot for the first time....");
-                    Console.ReadKey();
-                }
-                return s;
+                MessageBox.Show("Before you can use this bot, you need to generate a settings file.");
+                Application.Exit();
             } else
             {
                 return Settings.settings.token;
             }
+            return "";
         }
     }
 }

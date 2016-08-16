@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace DevJoeBot
 {
@@ -55,18 +56,46 @@ namespace DevJoeBot
 
         public static void Log(string r)
         {
-            int y = Console.CursorTop;
-            Console.CursorLeft = 0;
-            Console.Write("                                                                                                                                                                                                                                                                          ");
-            Console.CursorLeft = 0;
-            Console.CursorTop = y;
+            //int y = Console.CursorTop;
+            //Console.CursorLeft = 0;
+            //Console.Write("                                                                                                                                                                                                                                                                          ");
+            //Console.CursorLeft = 0;
+            //Console.CursorTop = y;
             Console.WriteLine(r);
-            Console.Write("COMMAND> "+currentinput);
+            //Console.Write("COMMAND> "+currentinput);
+            String fname = "latest.log";
+            if (!File.Exists(fname))
+            {
+                File.AppendAllText(fname, "[DevJoeBot Log]");
+            }
+            DateTime time = DateTime.Now;
+            File.AppendAllText(fname, "\n["+time.Month+"/"+time.Day+"/"+time.Year+" " + time.Hour + ":" + time.Minute + ":" + time.Second + ":" + time.Millisecond+"] "+r);
         }
 
         public void command(string s)
         {
             currentinput = "";
+            Command[] m = Command.defcommands.ToArray();
+            Command res = null;
+            for(int i=0;i<m.Length;i++)
+            {
+                if(m[i].name.ToLower().Substring(1) == s.ToLower())
+                {
+                    res = m[i];
+                }
+            }
+            if (res != null)
+            {
+                if (!res.console)
+                {
+                    Log("Error: This command cannot be ran from the console.");
+                }
+                else
+                {
+                    object[] a = Program.genargs(s);
+                    res.consoleRun((string[])a[1]);
+                }
+            }
         }
     }
 }

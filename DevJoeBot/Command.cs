@@ -8,6 +8,7 @@ namespace DevJoeBot
 {
 
     public delegate void CommandRun(object sender, string name, string[] args, Discord.User user, Discord.Channel c);
+    public delegate void ConsoleRun(object sender, string[] args);
 
     [Serializable]
     class Command
@@ -19,8 +20,10 @@ namespace DevJoeBot
         public string name = "";
         public string description = "";
         public string syntax = "";
+        public bool console = false;
         public int requiredRank = 0;
         public event CommandRun onCommandRun;
+        public event ConsoleRun onConsoleRun;
 
         public Command(bool a, string name, int requiredRank)
         {
@@ -33,6 +36,11 @@ namespace DevJoeBot
             }
             this.name = ";"+name;
             this.requiredRank = requiredRank;
+        }
+
+        public void consoleRun(string[] args)
+        {
+            onConsoleRun.Invoke(this, args);
         }
 
         public static Command getCommand(string r)

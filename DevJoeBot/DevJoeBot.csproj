@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{DB5E0A29-C320-4D7C-AB6B-51F73D4C0533}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>DevJoeBot</RootNamespace>
     <AssemblyName>DevJoeBot</AssemblyName>
@@ -31,6 +31,9 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Discord.Net, Version=0.9.4.0, Culture=neutral, processorArchitecture=MSIL">
@@ -59,6 +62,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -76,6 +80,7 @@
     <Compile Include="Command.cs" />
     <Compile Include="ConsoleTools.cs" />
     <Compile Include="FileIO.cs" />
+    <Compile Include="Generator.cs" />
     <Compile Include="SaveableSettings.cs" />
     <Compile Include="ServerObject.cs" />
     <Compile Include="Settings.cs" />

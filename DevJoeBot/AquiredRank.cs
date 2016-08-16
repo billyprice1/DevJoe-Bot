@@ -11,5 +11,6 @@ namespace DevJoeBot
         public static int USER = 0;
         public static int MOD = 1;
         public static int OWNER = 2;
+        public static int SUPERUSER = 3;
     }
 }
