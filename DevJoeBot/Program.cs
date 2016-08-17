@@ -62,8 +62,8 @@ namespace DevJoeBot
             cg.onCommandRun += Cf_onCommandRun1;
 
             Command cd = new Command(true, "modmode", AquiredRank.OWNER);
-            cd.description = "Toggles moderation mode for the current server";
-            cd.syntax = ";modmode";
+            cd.description = "Toggles moderation mode for the current server (Turning this on will allow the bot to moderate the server. Be sure that the bot has the required permissions. [Manage Messages, Kick, Ban])";
+            cd.syntax = ";modmode [toggle|options]";
             cd.onCommandRun += Cd_onCommandRun;
 
             Command ce = new Command(true, "modrole", AquiredRank.OWNER);
@@ -184,7 +184,26 @@ namespace DevJoeBot
 
         private static void Cd_onCommandRun(object sender, string name, string[] args, User user, Channel c)
         {
-            
+            if (args.Length == 1 && args[0] == "toggle")
+            {
+                getServerObject(c.Server.Id).toggleModerated();
+
+                c.SendMessage(CF.f(user, "Toggled moderation mode. (Current status: " + getServerObject(c.Server.Id).isModerated() + ")"));
+                Settings.SaveSettings();
+            } else if (args.Length == 0)
+            {
+                bool m = getServerObject(c.Server.Id).isModerated();
+                if(m)
+                {
+                    c.SendMessage(CF.f(user, "Moderation mode is currently activated."));
+                } else
+                {
+                    c.SendMessage(CF.f(user, "Moderation mode isn't activated."));
+                }
+            } else
+            {
+                c.SendMessage(CF.f(user, "This command doesn't require any arguments."));
+            }
         }
 
         private static void Cc_onCommandRun(object sender, string name, string[] args, User user, Channel cc)
@@ -317,6 +336,12 @@ namespace DevJoeBot
 
         private static void C_MessageReceived(object sender, MessageEventArgs e)
         {
+
+            if(e.User.Id == c.CurrentUser.Id)
+            {
+                return;
+            }
+
             if(e.Message.Text.StartsWith(";"))
             {
                 string m = e.Message.Text;
@@ -329,45 +354,56 @@ namespace DevJoeBot
                     if (c.requiredRank == 0)
                     {
                         c.execute(args, e.User, e.Channel);
-                        ConsoleTools.Log("User " + e.User.Name + " (" + e.User.Id + ") executed '" + e.Message + "' on server " + e.Server.Name + " (" + e.User.Id + ")");
+                        ConsoleTools.Log("User " + e.User.Name + " (" + e.User.Id + ") executed '" + e.Message.Text + "' on server " + e.Server.Name + " (" + e.User.Id + ")");
                     } else if(c.requiredRank == 1)
                     {
                         if(e.User.HasRole(e.Server.GetRole(getServerObject(e.Server.Id).modRole)) || e.User.Id == OwnerID || e.User.Id == e.Server.Owner.Id)
                         {
                             c.execute(args, e.User, e.Channel);
-                            ConsoleTools.Log("User " + e.User.Name + " (" + e.User.Id + ") executed '" + e.Message + "' on server " + e.Server.Name + " (" + e.User.Id + ")");
+                            ConsoleTools.Log("User " + e.User.Name + " (" + e.User.Id + ") executed '" + e.Message.Text + "' on server " + e.Server.Name + " (" + e.User.Id + ")");
                         } else
                         {
                             e.Channel.SendMessage(CF.f(e.User, "Hey! You don't have permission to run that! (Required Permission Level: MOD)"));
-                            ConsoleTools.Log("User " + e.User.Name + " (" + e.User.Id + ") attempted to execute '" + e.Message + "' on server " + e.Server.Name + " (" + e.User.Id + ") but didn't have permission level MOD");
+                            ConsoleTools.Log("User " + e.User.Name + " (" + e.User.Id + ") attempted to execute '" + e.Message.Text + "' on server " + e.Server.Name + " (" + e.User.Id + ") but didn't have permission level MOD");
                         }
                     } else if(c.requiredRank == 2)
                     {
                         if (e.User.Id == OwnerID || e.User.Id == e.Server.Owner.Id)
                         {
                             c.execute(args, e.User, e.Channel);
-                            Console.WriteLine("User " + e.User.Name + " (" + e.User.Id + ") executed '" + e.Message + "' on server " + e.Server.Name + " (" + e.User.Id + ")");
+                            Console.WriteLine("User " + e.User.Name + " (" + e.User.Id + ") executed '" + e.Message.Text + "' on server " + e.Server.Name + " (" + e.User.Id + ")");
                         }
                         else
                         {
                             e.Channel.SendMessage(CF.f(e.User, "Hey! You don't have permission to run that! (Required Permission Level: OWNER)"));
-                            Console.WriteLine("User " + e.User.Name + " (" + e.User.Id + ") attempted to execute '" + e.Message + "' on server " + e.Server.Name + " (" + e.User.Id + ") but didn't have permission level OWNER");
+                            Console.WriteLine("User " + e.User.Name + " (" + e.User.Id + ") attempted to execute '" + e.Message.Text + "' on server " + e.Server.Name + " (" + e.User.Id + ") but didn't have permission level OWNER");
                         }
                     } else if(c.requiredRank == 3)
                     {
                         if (e.User.Id == OwnerID)
                         {
                             c.execute(args, e.User, e.Channel);
-                            Console.WriteLine("User " + e.User.Name + " (" + e.User.Id + ") executed '" + e.Message + "' on server " + e.Server.Name + " (" + e.User.Id + ")");
+                            Console.WriteLine("User " + e.User.Name + " (" + e.User.Id + ") executed '" + e.Message.Text + "' on server " + e.Server.Name + " (" + e.User.Id + ")");
                         }
                         else
                         {
                             e.Channel.SendMessage(CF.f(e.User, "Hey! You don't have permission to run that! (Required Permission Level: SUPERUSER)"));
-                            Console.WriteLine("User " + e.User.Name + " (" + e.User.Id + ") attempted to execute '" + e.Message + "' on server " + e.Server.Name + " (" + e.User.Id + ") but didn't have permission level SUPERUSER");
+                            Console.WriteLine("User " + e.User.Name + " (" + e.User.Id + ") attempted to execute '" + e.Message.Text + "' on server " + e.Server.Name + " (" + e.User.Id + ") but didn't have permission level SUPERUSER");
                         }
                     }
                 }
             }
+
+            bool mm = getServerObject(e.Server.Id).isModerated();
+            if(mm)
+            {
+                if(e.Message.Text.ToCharArray().Length > 150)
+                {
+                    e.Message.Delete();
+                    e.Channel.SendMessage(CF.f(e.User, "You have exceeded the 150 character limit in a message. Your message was removed."));
+                }
+            }
+
         }
 
         public static object[] genargs(string s)

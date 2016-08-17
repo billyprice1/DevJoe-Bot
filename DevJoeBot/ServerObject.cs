@@ -14,6 +14,7 @@ namespace DevJoeBot
         public ulong ID;
         private bool moderated = false;
         public ulong modRole = 0;
+        public Dictionary<ulong, User> timeout = new Dictionary<ulong, User>();
 
         public ServerObject(Server s)
         {
